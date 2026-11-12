@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1">
+        <title>StudyCalc — Casio Style Scientific Calculator</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <style>
+            * {
+                box-sizing: border-box
+            }
+
+            body {
+                margin: 0;
+                background: radial-gradient(ellipse at 50% 15%,#253247 0,#111827 42%,#070b12 100%);
+                font-family: Arial,Helvetica,sans-serif;
+                color: #e5e7eb;
+                min-height: 100vh
+            }
+
+            .shell {
+                width: min(390px,94vw);
+                margin: 24px auto 32px;
+                padding: 13px 15px 18px;
+                border-radius: 35px;
+                background: linear-gradient(115deg,#090b10,#242832 18%,#11151c 42%,#292d35 70%,#080a0e);
+                border: 2px solid #4b5059;
+                box-shadow: inset 2px 2px 5px #74798555,inset -3px -4px 8px #000,0 24px 65px #000b;
+                position: relative
+            }
+
+            .shell:before {
+                content: "";
+                position: absolute;
+                inset: 5px;
+                border-radius: 30px;
+                border: 1px solid #ffffff12;
+                pointer-events: none
+            }
+
+            .brand {
+                height: 42px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 0 10px;
+                color: #dce0e6;
+                font-weight: 800;
+                letter-spacing: .4px;
+                font-size: 17px;
+                text-shadow: 0 1px 2px #000
+            }
+
+            .model {
+                font-size: 10px;
+                letter-spacing: .2px;
+                text-align: right;
+                line-height: 1.5
+            }
+
+            .model span {
+                font-weight: 400;
+                font-size: 9px
+            }
+
+            .screen-frame {
+                margin: 3px 4px 14px;
+                padding: 8px;
+                border-radius: 12px;
+                background: linear-gradient(135deg,#050608,#343942 50%,#090b0f);
+                box-shadow: inset 0 2px 5px #000,0 1px 1px #777
+            }
+
+            .screen {
+                height: 105px;
+                border-radius: 5px;
+                background: linear-gradient(135deg,#c9d8c2,#e1ebd5 55%,#c4d3bc);
+                color: #14231d;
+                padding: 9px 12px;
+                box-shadow: inset 0 0 8px #71836e;
+                position: relative;
+                overflow: hidden;
+                font-family: "Courier New",monospace
+            }
+
+            .screen-top {
+                height: 17px;
+                display: flex;
+                justify-content: space-between;
+                font-size: 10px;
+                font-weight: bold
+            }
+
+            .expression {
+                font-size: 20px;
+                line-height: 1.5;
+                white-space: nowrap;
+                overflow-x: auto;
+                text-align: right;
+                min-height: 29px
+            }
+
+            .answer {
+                font-size: 22px;
+                text-align: right;
+                font-weight: bold;
+                white-space: nowrap;
+                overflow-x: auto
+            }
+
+            .screen-status {
+                position: absolute;
+                left: 12px;
+                bottom: 6px;
+                font-size: 9px;
+                color: #35483c
+            }
+
+            .mode-row {
+                display: flex;
+                justify-content: space-between;
+                margin: 0 8px 8px;
+                font-size: 9px;
+                color: #d8dce2;
+                font-weight: bold
+            }
+
+            .mode-row .left {
+                display: flex;
+                gap: 22px
+            }
+
+            .keygrid {
+                display: grid;
+                grid-template-columns: repeat(5,minmax(0,1fr));
+                column-gap: 7px;
+                row-gap: 8px;
+                padding: 0 2px
+            }
+
+            .keywrap {
+                min-width: 0;
+                text-align: center
+            }
+
+            .sub {
+                height: 14px;
+                font-size: 8px;
+                font-weight: bold;
+                color: #d7c46a;
+                white-space: nowrap;
+                line-height: 14px;
+                text-shadow: 0 1px 1px #000
+            }
+
+            .sub.pink {
+                color: #e7a0ba
+            }
+
+            .key {
+                width: 100%;
+                height: 37px;
+                border-radius: 8px;
+                border: 1px solid #090b0e;
+                background: linear-gradient(180deg,#555b65 0%,#303640 48%,#171c24 100%);
+                box-shadow: inset 0 1px 1px #aeb5c155,0 2px 2px #000b;
+                color: #f4f5f6;
+                font-size: 14px;
+                font-weight: 600;
+                text-shadow: 0 1px 2px #000;
+                cursor: pointer;
+                touch-action: manipulation
+            }
+
+            .key:active {
+                transform: translateY(1px);
+                background: linear-gradient(#252a32,#515864)
+            }
+
+            .key.num {
+                height: 39px;
+                font-size: 19px;
+                background: linear-gradient(#89919a,#555e68 52%,#333a43);
+                color: #f8fafc
+            }
+
+            .key.green {
+                background: linear-gradient(#b7e45e,#67a82d 55%,#36751e);
+                color: #fafff4;
+                text-shadow: 0 1px 2px #23410e
+            }
+
+            .key.ac {
+                background: linear-gradient(#a5d65a,#579b24 55%,#2f711b)
+            }
+
+            .key.light {
+                background: linear-gradient(#aeb5bd,#737d88 55%,#48515b)
+            }
+
+            .key.orange {
+                background: linear-gradient(#d6a16b,#8e5b2e 55%,#55331b)
+            }
+
+            .key.nav {
+                height: 36px;
+                border-radius: 50%;
+                font-size: 12px;
+                width: 36px;
+                margin: auto;
+                display: block
+            }
+
+            .navrow {
+                display: grid;
+                grid-template-columns: repeat(5,1fr);
+                align-items: center;
+                margin: 2px 0 5px;
+                gap: 6px
+            }
+
+            .navcenter {
+                height: 40px;
+                width: 40px;
+                border-radius: 50%;
+                margin: auto;
+                background: radial-gradient(circle,#68717b,#202630 68%,#080a0e);
+                border: 1px solid #080a0e;
+                box-shadow: inset 0 1px 2px #b9c0c755,0 2px 3px #000;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                align-items: center;
+                justify-items: center;
+                color: #f1f5f9;
+                font-size: 12px;
+                font-weight: bold
+            }
+
+            .navcenter button {
+                border: 0;
+                background: none;
+                color: inherit;
+                padding: 0;
+                cursor: pointer
+            }
+
+            .bottom-label {
+                font-size: 8px;
+                color: #bfc5ce;
+                text-align: center;
+                margin-top: 12px;
+                letter-spacing: 1.5px
+            }
+
+            .below {
+                width: min(520px,94vw);
+                margin: 0 auto 30px
+            }
+
+            .panel {
+                background: #111827cc;
+                border: 1px solid #475569;
+                border-radius: 15px;
+                padding: 12px
+            }
+
+            .panel button {
+                border: 1px solid #475569;
+                border-radius: 8px;
+                padding: 5px 9px;
+                font-size: 12px
+            }
+
+            .history-item {
+                padding: 8px;
+                border-bottom: 1px solid #334155;
+                font-size: 12px;
+                cursor: pointer
+            }
+
+            .history-item:hover {
+                background: #1e293b
+            }
+
+            @media(max-width: 360px) {
+                .shell {
+                    padding:10px 10px 15px
+                }
+
+                .keygrid {
+                    gap: 6px
+                }
+
+                .key {
+                    height: 34px
+                }
+
+                .key.num {
+                    height: 37px
+                }
+
+                .screen {
+                    height: 96px
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <main>
+            <div class="shell">
+                <div class="brand">
+                    <div>CASIO</div>
+                    <div class="model">
+                        fx-82ES PLUS<br>
+                        <span>2nd edition</span>
+                    </div>
+                </div>
+                <div class="brand" style="height:20px;justify-content:center;font-size:10px;font-style:italic;letter-spacing:1px">NATURAL-V.P.A.M.</div>
+                <div class="screen-frame">
+                    <div class="screen">
+                        <div class="screen-top">
+                            <span id="screenMode">D</span>
+                            <span>Math ▲</span>
+                        </div>
+                        <div class="expression" id="expression">0</div>
+                        <div class="answer" id="result">0</div>
+                        <div class="screen-status" id="status">READY</div>
+                    </div>
+                </div>
+                <div class="mode-row">
+                    <div class="left">
+                        <span>SHIFT</span>
+                        <span style="color:#e7a0ba">ALPHA</span>
+                    </div>
+                    <div>MODE SETUP　 ON</div>
+                </div>
+                <div class="navrow">
+                    <button class="key nav" data-action="shift">SHIFT</button>
+                    <button class="key nav" data-action="alpha">ALPHA</button>
+                    <div class="navcenter">
+                        <button data-action="left">◀</button>
+                        <button data-action="up">▲</button>
+                        <button data-action="down">▼</button>
+                        <button data-action="right">▶</button>
+                    </div>
+                    <button class="key nav" data-action="mode">MODE</button>
+                    <button class="key nav" data-action="on">ON</button>
+                </div>
+                <div class="keygrid" id="keys">
+                    <div class="keywrap">
+                        <div class="sub">Abs</div>
+                        <button class="key" data-insert="abs(">Abs</button>
+                    </div>
+                    <div class="keywrap">
+                        <div class="sub">x⁻¹</div>
+                        <button class="key" data-insert="^(-1)">x⁻¹</button>
+                    </div>
+                    <div class="keywrap">
+                        <div class="sub">x³</div>
+                        <button class="key" data-insert="^3">x³</button>
+                    </div>
+                    <div class="keywrap">
+                        <div class="sub">x²</div>
+                        <button class="key" data-insert="^2">x²</button>
+                    </div>
+                    <div class="keywrap">
+                        <div class="sub">log□</div>
+                        <button class="key" data-insert="log(">log</button>
+                    </div>
+                    <div class="keywrap">
+                        <div class="sub">∛</div>
+                        <button class="key" data-insert="cbrt(">∛</button>
+                    </div>
+                    <div class="keywrap">
+                        <div class="sub">√</div>
+                        <button class="key" data-insert="sqrt(">√</button>
+                    </div>
+                    <div class="keywrap">
+                        <div class="sub">x√</div>
+                        <button class="key" data-insert="^(1/">x√</button>
+                    </div>
+                    <div class="keywrap">
+                        <div class="sub">10ˣ</div>
+                        <button class="key" data-insert="10^(">10ˣ</button>
+                    </div>
+                    <div class="keywrap">
+                        <div class="sub">eˣ</div>
+                        <button class="key" data-insert="exp(">eˣ</button>
+                    </div>
+                    <div class="keywrap">
+                        <div class="sub">(-)</div>
+                        <button class="key" data-insert="-">(-)</button>
+                    </div>
+                    <div class="keywrap">
+                        <div class="sub">° ′ ″</div>
+                        <button class="key" data-insert="°">°′″</button>
+                    </div>
+                    <div class="keywrap">
+                        <div class="sub">hyp</div>
+                        <button class="key" data-action="hyp">hyp</button>
+                    </div>
+                    <div class="keywrap">
+                        <div class="sub">sin⁻¹</div>
+                        <button class="key" data-insert="sin(">sin</button>
+                    </div>
+                    <div class="keywrap">
+                        <div class="sub">cos⁻¹</div>
+                        <button class="key" data-insert="cos(">cos</button>
+                    </div>
+                    <div class="keywrap">
+                        <div class="sub">tan⁻¹</div>
+                        <button class="key" data-insert="tan(">tan</button>
+                    </div>
+                    <div class="keywrap">
+                        <div class="sub">RCL</div>
+                        <button class="key" data-action="recall">RCL</button>
+                    </div>
+                    <div class="keywrap">
+                        <div class="sub">ENG</div>
+                        <button class="key" data-action="eng">ENG</button>
+                    </div>
+                    <div class="keywrap">
+                        <div class="sub">(</div>
+                        <button class="key" data-insert="(">(</button>
+                    </div>
+                    <div class="keywrap">
+                        <div class="sub">)</div>
+                        <button class="key" data-insert=")">)</button>
+                    </div>
+                    <div class="keywrap">
+                        <div class="sub">S⇔D</div>
+                        <button class="key" data-action="sd">S⇔D</button>
+                    </div>
+                    <div class="keywrap">
+                        <div class="sub">M−</div>
+                        <button class="key" data-action="mminus">M−</button>
+                    </div>
+                    <div class="keywrap">
+                        <div class="sub">M+</div>
+                        <button class="key" data-action="mplus">M+</button>
+                    </div>
+                    <div class="keywrap">
+                        <div class="sub">÷</div>
+                        <button class="key" data-insert="/">÷</button>
+                    </div>
+                    <div class="keywrap">
+                        <div class="sub">×</div>
+                        <button class="key" data-insert="*">×</button>
+                    </div>
+                    <div class="keywrap">
+                        <div class="sub">7</div>
+                        <button class="key num" data-insert="7">7</button>
+                    </div>
+                    <div class="keywrap">
+                        <div class="sub">8</div>
+                        <button class="key num" data-insert="8">8</button>
+                    </div>
+                    <div class="keywrap">
+                        <div class="sub">9</div>
+                        <button class="key num" data-insert="9">9</button>
+                    </div>
+                    <div class="keywrap">
+                        <div class="sub">DEL</div>
+                        <button class="key green" data-action="delete">DEL</button>
+                    </div>
+                    <div class="keywrap">
+                        <div class="sub">AC</div>
+                        <button class="key ac" data-action="clear">AC</button>
+                    </div>
+                    <div class="keywrap">
+                        <div class="sub">4</div>
+                        <button class="key num" data-insert="4">4</button>
+                    </div>
+                    <div class="keywrap">
+                        <div class="sub">5</div>
+                        <button class="key num" data-insert="5">5</button>
+                    </div>
+                    <div class="keywrap">
+                        <div class="sub">6</div>
+                        <button class="key num" data-insert="6">6</button>
+                    </div>
+                    <div class="keywrap">
+                        <div class="sub">×</div>
+                        <button class="key light" data-insert="*">×</button>
+                    </div>
+                    <div class="keywrap">
+                        <div class="sub">÷</div>
+                        <button class="key light" data-insert="/">÷</button>
+                    </div>
+                    <div class="keywrap">
+                        <div class="sub">1</div>
+                        <button class="key num" data-insert="1">1</button>
+                    </div>
+                    <div class="keywrap">
+                        <div class="sub">2</div>
+                        <button class="key num" data-insert="2">2</button>
+                    </div>
+                    <div class="keywrap">
+                        <div class="sub">3</div>
+                        <button class="key num" data-insert="3">3</button>
+                    </div>
+                    <div class="keywrap">
+                        <div class="sub">+</div>
+                        <button class="key light" data-insert="+">+</button>
+                    </div>
+                    <div class="keywrap">
+                        <div class="sub">−</div>
+                        <button class="key light" data-insert="-">−</button>
+                    </div>
+                    <div class="keywrap">
+                        <div class="sub">0</div>
+                        <button class="key num" data-insert="0">0</button>
+                    </div>
+                    <div class="keywrap">
+                        <div class="sub">Ran#</div>
+                        <button class="key num" data-action="random">.</button>
+                    </div>
+                    <div class="keywrap">
+                        <div class="sub">×10ˣ</div>
+                        <button class="key" data-insert="*10^(">×10ˣ</button>
+                    </div>
+                    <div class="keywrap">
+                        <div class="sub">Ans</div>
+                        <button class="key light" data-insert="Ans">Ans</button>
+                    </div>
+                    <div class="keywrap">
+                        <div class="sub">EXE</div>
+                        <button class="key light" data-action="equals">=</button>
+                    </div>
+                </div>
+                <div class="bottom-label">SCIENTIFIC CALCULATOR · STUDYCALC</div>
+            </div>
+            <div class="below grid gap-3 sm:grid-cols-2">
+                <section class="panel">
+                    <div class="flex items-center justify-between gap-2">
+                        <b class="text-sm">Angle unit</b>
+                        <button id="angleToggle">DEG / RAD</button>
+                    </div>
+                    <p class="mt-2 text-xs text-slate-400">
+                        Current mode: <strong id="angleMode" class="text-slate-100">DEG</strong>. Trigonometric functions use this setting.
+                    </p>
+                </section>
+                <section class="panel">
+                    <div class="flex items-center justify-between">
+                        <b class="text-sm">Calculation history</b>
+                        <button id="clearHistory">Clear</button>
+                    </div>
+                    <div id="history" class="mt-2 text-slate-300">
+                        <p class="text-xs text-slate-500">Your calculations appear here.</p>
+                    </div>
+                </section>
+                <p class="sm:col-span-2 text-center text-xs text-slate-500">Keyboard: 0–9, + − × ÷, parentheses · Enter = calculate · Backspace = delete · Esc = clear</p>
+            </div>
+        </main>
+        <script>
+            ( () => {
+                let expr = ''
+                  , ans = 0
+                  , mode = 'DEG'
+                  , memory = 0
+                  , history = [];
+                const $ = id => document.getElementById(id)
+                  , expEl = $('expression')
+                  , resEl = $('result')
+                  , status = $('status');
+                function fmt(n) {
+                    if (!Number.isFinite(n))
+                        throw Error('Math error');
+                    if (Math.abs(n) > 1e12 || Math.abs(n) > 0 && Math.abs(n) < 1e-8)
+                        return n.toExponential(7);
+                    return Number(n.toPrecision(11)).toString()
+                }
+                function evaluate(src) {
+                    let s = src.replace(/π/g, 'pi').replace(/×/g, '*').replace(/÷/g, '/')
+                      , i = 0;
+                    const skip = () => {
+                        while (/\s/.test(s[i] || ''))
+                            i++
+                    }
+                      , eat = t => {
+                        skip();
+                        if (s.slice(i, i + t.length).toLowerCase() === t.toLowerCase()) {
+                            i += t.length;
+                            return true
+                        }
+                        return false
+                    }
+                    ;
+                    function expr() {
+                        let v = term();
+                        while (true) {
+                            if (eat('+'))
+                                v += term();
+                            else if (eat('-'))
+                                v -= term();
+                            else
+                                return v
+                        }
+                    }
+                    function term() {
+                        let v = unary();
+                        while (true) {
+                            if (eat('*'))
+                                v *= unary();
+                            else if (eat('/')) {
+                                let d = unary();
+                                if (!d)
+                                    throw Error('Cannot divide by zero');
+                                v /= d
+                            } else if (eat('mod'))
+                                v %= unary();
+                            else
+                                return v
+                        }
+                    }
+                    function unary() {
+                        if (eat('+'))
+                            return unary();
+                        if (eat('-'))
+                            return -unary();
+                        return power()
+                    }
+                    function power() {
+                        let v = postfix();
+                        if (eat('^'))
+                            v = Math.pow(v, unary());
+                        return v
+                    }
+                    function postfix() {
+                        let v = primary();
+                        while (eat('!')) {
+                            if (v < 0 || v > 170 || !Number.isInteger(v))
+                                throw Error('Factorial needs an integer 0–170');
+                            let r = 1;
+                            for (let k = 2; k <= v; k++)
+                                r *= k;
+                            v = r
+                        }
+                        return v
+                    }
+                    function primary() {
+                        skip();
+                        if (eat('(')) {
+                            let v = expr();
+                            if (!eat(')'))
+                                throw Error('Missing )');
+                            return v
+                        }
+                        let m = s.slice(i).match(/^(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?/i);
+                        if (m) {
+                            i += m[0].length;
+                            return Number(m[0])
+                        }
+                        let id = s.slice(i).match(/^[a-z]+/i);
+                        if (id) {
+                            i += id[0].length;
+                            let name = id[0].toLowerCase();
+                            if (name === 'pi')
+                                return Math.PI;
+                            if (name === 'e')
+                                return Math.E;
+                            if (name === 'ans')
+                                return ans;
+                            if (!eat('('))
+                                throw Error('Function needs (');
+                            let x = expr();
+                            if (!eat(')'))
+                                throw Error('Missing )');
+                            let rad = mode === 'DEG' ? x * Math.PI / 180 : x
+                              , deg = mode === 'DEG' ? 180 / Math.PI : 1;
+                            let f = {
+                                sin: Math.sin(rad),
+                                cos: Math.cos(rad),
+                                tan: Math.tan(rad),
+                                asin: Math.asin(x) * deg,
+                                acos: Math.acos(x) * deg,
+                                atan: Math.atan(x) * deg,
+                                log: Math.log10(x),
+                                ln: Math.log(x),
+                                sqrt: Math.sqrt(x),
+                                cbrt: Math.cbrt(x),
+                                abs: Math.abs(x),
+                                exp: Math.exp(x)
+                            };
+                            if (!(name in f))
+                                throw Error('Unknown function ' + name);
+                            return f[name]
+                        }
+                        throw Error('Incomplete expression')
+                    }
+                    let v = expr();
+                    skip();
+                    if (i < s.length)
+                        throw Error('Check expression');
+                    if (!Number.isFinite(v))
+                        throw Error('Math error');
+                    return v
+                }
+                function render() {
+                    expEl.textContent = expr || '0';
+                    if (!expr) {
+                        resEl.textContent = '0';
+                        status.textContent = 'READY';
+                        return
+                    }
+                    try {
+                        resEl.textContent = fmt(evaluate(expr));
+                        status.textContent = 'PREVIEW'
+                    } catch (e) {
+                        resEl.textContent = '—';
+                        status.textContent = e.message
+                    }
+                }
+                function insert(v) {
+                    if (v === 'π')
+                        v = 'pi';
+                    expr += v;
+                    render()
+                }
+                function calc() {
+                    try {
+                        let v = evaluate(expr);
+                        ans = v;
+                        history.unshift({
+                            e: expr,
+                            v
+                        });
+                        history = history.slice(0, 8);
+                        renderHistory();
+                        resEl.textContent = fmt(v);
+                        status.textContent = 'ANSWER';
+                    } catch (e) {
+                        resEl.textContent = 'Error';
+                        status.textContent = e.message
+                    }
+                }
+                function renderHistory() {
+                    $('history').innerHTML = '';
+                    if (!history.length) {
+                        $('history').textContent = 'No calculations yet.';
+                        return
+                    }
+                    history.forEach(h => {
+                        let d = document.createElement('div');
+                        d.className = 'history-item';
+                        d.textContent = h.e + ' = ' + fmt(h.v);
+                        d.onclick = () => {
+                            expr = h.e;
+                            render()
+                        }
+                        ;
+                        $('history').append(d)
+                    }
+                    )
+                }
+                $('keys').addEventListener('click', e => {
+                    let b = e.target.closest('button');
+                    if (!b)
+                        return;
+                    if (b.dataset.insert !== undefined) {
+                        insert(b.dataset.insert);
+                        return
+                    }
+                    let a = b.dataset.action;
+                    if (a === 'clear') {
+                        expr = '';
+                        render()
+                    }
+                    if (a === 'delete') {
+                        expr = expr.slice(0, -1);
+                        render()
+                    }
+                    if (a === 'equals')
+                        calc();
+                    if (a === 'random')
+                        insert(String(Math.random()).slice(0, 7));
+                    if (a === 'mplus') {
+                        try {
+                            memory += evaluate(expr);
+                            status.textContent = 'M+'
+                        } catch {
+                            status.textContent = 'Invalid'
+                        }
+                    }
+                    if (a === 'mminus') {
+                        try {
+                            memory -= evaluate(expr);
+                            status.textContent = 'M−'
+                        } catch {
+                            status.textContent = 'Invalid'
+                        }
+                    }
+                    if (a === 'recall')
+                        insert(String(memory));
+                    if (a === 'sd')
+                        status.textContent = 'Decimal display';
+                    if (a === 'eng')
+                        status.textContent = 'Engineering notation';
+                    if (a === 'hyp')
+                        status.textContent = 'Hyperbolic mode';
+                    if (a === 'shift' || a === 'alpha')
+                        status.textContent = a.toUpperCase() + ' mode';
+                    if (a === 'mode')
+                        status.textContent = 'Choose DEG/RAD below';
+                    if (a === 'on') {
+                        expr = '';
+                        render()
+                    }
+                }
+                );
+                $('angleToggle').onclick = () => {
+                    mode = mode === 'DEG' ? 'RAD' : 'DEG';
+                    $('angleMode').textContent = mode;
+                    $('screenMode').textContent = mode === 'DEG' ? 'D' : 'R';
+                    render()
+                }
+                ;
+                $('clearHistory').onclick = () => {
+                    history = [];
+                    renderHistory()
+                }
+                ;
+                document.addEventListener('keydown', e => {
+                    if (e.ctrlKey || e.metaKey || e.altKey)
+                        return;
+                    if (/^[0-9.]$/.test(e.key) || ['+', '-', '*', '/', '^', '(', ')', '!'].includes(e.key))
+                        insert(e.key);
+                    else if (e.key === 'Enter' || e.key === '=') {
+                        e.preventDefault();
+                        calc()
+                    } else if (e.key === 'Backspace') {
+                        expr = expr.slice(0, -1);
+                        render()
+                    } else if (e.key === 'Escape') {
+                        expr = '';
+                        render()
+                    }
+                }
+                );
+                render();
+            }
+            )();
+        </script>
+    </body>
+</html>
